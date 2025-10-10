@@ -17,7 +17,7 @@ export default function App() {
         <main className="flex flex-1 flex-col bg-white text-slate-900 min-w-[360px]">
             {/* ================= HEADER ================= */}
             <header className={[
-                "sticky top-0 z-40 border-b border-black/10 backdrop-blur bg-black",
+                "fixed top-0 left-0 right-0 z-40 border-b border-black/10 backdrop-blur bg-black",
                 "transition-transform duration-200 will-change-transform",
                 // hide on scroll down, show on scroll up
                 pinned ? "translate-y-0" : "-translate-y-full",
