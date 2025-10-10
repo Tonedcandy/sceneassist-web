@@ -1,23 +1,14 @@
 // src/App.tsx
-import React from "react";
-
-/* ---- your assets (place in src/assets/) ---- */
 import logoPill from "./assets/sceneassist-lockup-stacked.svg";
 import phones from "./assets/image-3.png";
-import playBadge from "./assets/image-2.png";
-import appStoreBadge from "./assets/group.png";
+
+// import playBadge from "./assets/image-2.png";
+// import appStoreBadge from "./assets/group.png";
+
 import useHeadroom from "./components/hooks/useHeadroom";
 
-/* Brand tokens */
-const brand = {
-    primary: "#002363",
-    blue: "#a6c6fe",
-};
-
-
-
 export default function App() {
-    const { pinned, scrolled } = useHeadroom({
+    const { pinned } = useHeadroom({
         pinStart: 24,        // start reacting after 24px
         downTolerance: 10,   // feel free to tweak
         upTolerance: 6,
