@@ -23,7 +23,7 @@ export default function App() {
         upTolerance: 6,
     });
     return (
-        <main className="flex flex-1 flex-col bg-white text-slate-900">
+        <main className="flex flex-1 flex-col bg-white text-slate-900 min-w-[360px]">
             {/* ================= HEADER ================= */}
             <header className={[
                 "sticky top-0 z-40 border-b border-black/10 backdrop-blur bg-black",
@@ -52,7 +52,7 @@ export default function App() {
                 id="home"
                 className="
                 flex-1
-                relative flex w-[100dvw] left-[calc(50%-50dvw)] items-center pt-px pb-px -mb-px isolate"
+                relative flex w-full left-[calc(50%-50w)] items-center pt-px pb-px -mb-px isolate"
                 style={{
                     background: `
             radial-gradient(1200px 600px at 70% -10%, rgba(255,255,255,.45), transparent 60%),
@@ -61,7 +61,7 @@ export default function App() {
             >
                 <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8 py-8 md:py-2 lg:py-20">
                     {/* Transparent content grid */}
-                    <div className="relative grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+                    <div className="relative grid items-center gap-8 xl:grid-cols-[1.05fr_0.95fr]">
                         {/* Left: copy + badges */}
                         <div className="min-w-0">
                             <h1
@@ -134,7 +134,7 @@ export default function App() {
 
                                         {/* Affiliation */}
                                         <label className="block">
-                                            <span className="text-start mb-1 block font-medium text-slate-800">Affiliation / Campus / Department or Venue</span>
+                                            <span className="text-start mb-1 block font-medium text-slate-800 whitespace-nowrap">Affiliation / Campus / Department or Venue</span>
                                             <input
                                                 name="affiliation"
                                                 required
@@ -200,11 +200,11 @@ export default function App() {
                         </div>
 
                         {/* Right: phones */}
-                        <div className="relative flex items-center justify-center lg:justify-end min-w-0">
+                        <div className="relative flex items-center justify-center xl:justify-end min-w-0">
                             <img
                                 src={phones}
                                 alt="SceneAssist mobile app mockups"
-                                className="block h-auto max-w-full w-[min(560px,92%,calc(min(520px,65vh)*916/1041))]"
+                                className="block w-[clamp(300px,36vw,560px)] aspect-[916/1041]"
                                 loading="eager"
                             />
                         </div>

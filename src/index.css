@@ -9,12 +9,17 @@ body,
   height: 100%;
   padding: 0;
   margin: 0;
+  min-width: inherit;
 }
 
 body {
   display: block !important;
-  min-width: 0 !important;
+  min-width: 375 !important;
   min-height: 0 !important;
+}
+
+html {
+  min-width: 375 !important;
 }
 
 /* Design tokens */
