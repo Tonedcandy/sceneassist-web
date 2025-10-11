@@ -5,16 +5,18 @@ import phones from "./assets/image-3.png";
 // import playBadge from "./assets/image-2.png";
 // import appStoreBadge from "./assets/group.png";
 
+
+
 import useHeadroom from "./components/hooks/useHeadroom";
 
 export default function App() {
     const { pinned } = useHeadroom({
-        pinStart: 24,        // start reacting after 24px
-        downTolerance: 10,   // feel free to tweak
+        pinStart: 24,
+        downTolerance: 10,
         upTolerance: 6,
     });
     return (
-        <main className="flex flex-1 flex-col bg-white text-slate-900 min-w-[360px]">
+        <main className="flex flex-1 flex-col text-slate-900 min-w-[360px]">
             {/* ================= HEADER ================= */}
             <header className={[
                 "fixed top-0 left-0 right-0 z-40 border-b border-black/10 backdrop-blur bg-black",
@@ -44,13 +46,9 @@ export default function App() {
                 className="
                 flex-1
                 relative flex w-full left-[calc(50%-50w)] items-center pt-px pb-px -mb-px isolate"
-                style={{
-                    background: `
-            radial-gradient(1200px 600px at 70% -10%, rgba(255,255,255,.45), transparent 60%),
-            linear-gradient(180deg, #b9d0ff 0%, #a6c6fe 35%, #97b7f2 100%)`,
-                }}
+
             >
-                <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8 py-8 md:py-2 lg:py-20">
+                <div className="hero-bg mx-auto w-full px-4 py-20 sm:px-6 lg:px-8">
                     {/* Transparent content grid */}
                     <div className="relative grid items-center gap-8 xl:grid-cols-[1.05fr_0.95fr]">
                         {/* Left: copy + badges */}
@@ -191,7 +189,7 @@ export default function App() {
                         </div>
 
                         {/* Right: phones */}
-                        <div className="relative flex items-center justify-center xl:justify-end min-w-0">
+                        <div className="order-2 relative flex items-center justify-center xl:justify-end min-w-0">
                             <img
                                 src={phones}
                                 alt="SceneAssist mobile app mockups"
@@ -202,12 +200,6 @@ export default function App() {
                     </div>
                 </div>
             </section>
-
-            {/* ================= FOOTER =================
-          - Full-bleed to match the hero.
-          - pt-px prevents top-margin collapse from its first child.
-          - flow-root creates an isolated block formatting context (also blocks margin collapse).
-      */}
         </main>
     );
 }
