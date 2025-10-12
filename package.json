@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@lottiefiles/dotlottie-react": "^0.17.5",
-    "@vercel/postgres": "^0.10.0",
+    "@supabase/supabase-js": "^2.75.0",
+    "raw-body": "^3.0.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-icons": "^5.5.0"

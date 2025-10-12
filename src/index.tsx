@@ -1,13 +1,53 @@
 // src/App.tsx
 import logoPill from "./assets/sceneassist-lockup-stacked.svg";
 import phones from "./assets/image-3.png";
+import React, { useState } from 'react';
+import AppleIdHelp from "./components/AppleIDHelp";
 
 // import playBadge from "./assets/image-2.png";
 // import appStoreBadge from "./assets/group.png";
 
-
-
 import useHeadroom from "./components/hooks/useHeadroom";
+
+// Custom messages per field + constraint type
+const ERR: Record<string, Partial<Record<"valueMissing" | "typeMismatch" | "patternMismatch", string>>> = {
+    full_name: {
+        valueMissing: "Please enter your full name",
+    },
+    apple_id_email: {
+        valueMissing: "Please enter your Apple ID email",
+        typeMismatch: "Enter a valid Apple ID email you use with the App Store",
+    },
+    affiliation: {
+        valueMissing: "Please enter your campus department or venue",
+    },
+    role: {
+        valueMissing: "Please select your role",
+    },
+    consent: {
+        valueMissing: "You must agree to receive a TestFlight invitation to continue",
+    },
+};
+
+// Set a custom message based on the element’s validity
+const handleInvalid = (e: React.FormEvent<any>) => {
+    const el = e.currentTarget as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    const name = (el.getAttribute("name") || el.id || "").toString();
+    const v = el.validity;
+
+    let msg = "";
+    if (v.valueMissing && ERR[name]?.valueMissing) msg = ERR[name]!.valueMissing!;
+    else if (v.typeMismatch && ERR[name]?.typeMismatch) msg = ERR[name]!.typeMismatch!;
+    else if (v.patternMismatch && ERR[name]?.patternMismatch) msg = ERR[name]!.patternMismatch!;
+
+    el.setCustomValidity(msg);
+};
+
+// Clear custom message as the user types/selects
+const clearInvalid = (e: React.FormEvent<any>) => {
+    (e.currentTarget as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).setCustomValidity("");
+};
+
 
 export default function App() {
     const { pinned } = useHeadroom({
@@ -15,11 +55,40 @@ export default function App() {
         downTolerance: 10,
         upTolerance: 6,
     });
+
+    const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
+    const [showAidHelp, setShowAidHelp] = useState(false);
+
+    async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        setState("loading");
+
+        const fd = new FormData(e.currentTarget);
+
+        // send exactly what a normal form would send
+        const body = new URLSearchParams();
+        fd.forEach((v, k) => body.append(k, String(v)));
+
+        try {
+            const res = await fetch("/api/testflight-signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                    "Accept": "application/json", // so the API can return 200 JSON (no redirect)
+                },
+                body: body.toString(),
+            });
+            setState(res.ok ? "success" : "error");
+        } catch {
+            setState("error");
+        }
+    }
+
     return (
         <main className="flex flex-1 flex-col text-slate-900 min-w-[360px]">
             {/* ================= HEADER ================= */}
             <header className={[
-                "fixed top-0 left-0 right-0 z-40 border-b border-black/10 backdrop-blur bg-black",
+                "sticky top-0 left-0 right-0 z-40 border-b border-black/10 backdrop-blur bg-black",
                 "transition-transform duration-200 will-change-transform",
                 // hide on scroll down, show on scroll up
                 pinned ? "translate-y-0" : "-translate-y-full",
@@ -44,11 +113,13 @@ export default function App() {
             <section
                 id="home"
                 className="
+                flex
                 flex-1
-                relative flex w-full left-[calc(50%-50w)] items-center pt-px pb-px -mb-px isolate"
+                flex-col
+                relative w-full left-[calc(50%-50w)] items-center isolate"
 
             >
-                <div className="hero-bg mx-auto w-full px-4 py-20 sm:px-6 lg:px-8">
+                <div className="grow hero-bg mx-auto w-full px-4 xl:py-10 py-5 sm:px-6 lg:px-8">
                     {/* Transparent content grid */}
                     <div className="relative grid items-center gap-8 xl:grid-cols-[1.05fr_0.95fr]">
                         {/* Left: copy + badges */}
@@ -61,27 +132,29 @@ export default function App() {
                                 <span className="block">that’s actually easy.</span>
                             </h1>
 
-                            <p className="text-center mt-5 text-lg text-slate-800">
+                            <p className="text-center mt-5 text-lg text-slate-800 mx-auto w-full max-w-[360px] sm:max-w-[640px]">
                                 Inclusive, low-latency audio description for live theatre and
                                 campus events - right on your phone. No rentals. No lines.{" "}
                                 <strong>Start listening.</strong>
                             </p>
-                            <h2 id="beta-signup" className="mt-4 text-xl font-semibold text-slate-900">
-                                Request TestFlight invite
-                            </h2>
-                            <p className="mt-1 text-sm text-slate-700">
-                                Private iOS beta for campus pilots. iOS TestFlight required.
-                            </p>
-                            <div className="mt-4 flex w-full flex-wrap items-center justify-center gap-4">
+
+                            <div className="mt-4 flex flex-col w-full flex-wrap items-center justify-center gap-4 min-h-[340px] sm:min-h-[380px]">
                                 {/* <img src={appStoreBadge} alt="Pre-order on the App Store" className="h-14 w-auto" loading="lazy" />
                                 <img src={playBadge} alt="Pre-register on Google Play" className="h-14 w-auto" loading="lazy" /> */}
 
-                                <form action="/api/testflight-signup" method="POST" className="mx-auto w-full max-w-[360px] sm:max-w-[640px] space-y-2 text-sm">
+                                <form action="/api/testflight-signup" method="POST" className={`${state === "success" ? "hidden" : ""} mx-auto w-full max-w-[360px] sm:max-w-[640px] space-y-2 text-sm`} onSubmit={onSubmit}>
+                                    <h1 id="beta-signup" className="mt-4 text-3xl font-semibold text-slate-900">
+                                        Request TestFlight invite
+                                    </h1>
+                                    <p className="mt-1 text-base text-slate-700">
+                                        Private iOS beta for campus pilots. iOS TestFlight required.
+                                    </p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         {/* Full name */}
                                         <label className="block">
                                             <span className="text-start mb-1 block font-medium text-slate-800">Full name</span>
                                             <input
+                                                onInvalid={handleInvalid}
                                                 name="full_name"
                                                 required
                                                 placeholder="Jane Doe"
@@ -94,10 +167,14 @@ export default function App() {
                                             <div className="mb-1 flex items-center gap-1">
                                                 <span className="font-medium text-slate-800">Apple ID email</span>
                                                 <span className="relative group inline-flex">
-                                                    <button
+                                                    {/* <button
                                                         type="button"
                                                         aria-describedby="apple-id-help"
-                                                        className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-slate-400 bg-white text-[10px] leading-none text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+                                                        aria-expanded={showAidHelp}
+                                                        aria-controls="apple-id-help"
+                                                        onClick={() => setShowAidHelp((v) => !v)}
+                                                        onBlur={() => setShowAidHelp(false)}        // closes when focus leaves
+                                                        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-400 bg-white text-[10px] leading-none text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
                                                         aria-label="What is an Apple ID email?"
                                                     >
                                                         i
@@ -105,13 +182,15 @@ export default function App() {
                                                     <span
                                                         id="apple-id-help"
                                                         role="tooltip"
-                                                        className="pointer-events-none absolute left-1/2 z-10 mt-2 hidden w-60 -translate-x-1/2 rounded-md bg-slate-900 px-2.5 py-2 text-xs text-white shadow-lg group-hover:block group-focus-within:block"
-                                                    >
+                                                        className={`absolute left-1/2 z-30 mt-2 w-60 -translate-x-1/2 rounded-md bg-slate-900 px-2.5 py-2 text-xs text-white shadow-lg ${showAidHelp ? "block" : "hidden"
+                                                            }`}                                                    >
                                                         The email you use with the App Store on your device. We’ll send your TestFlight invite here.
-                                                    </span>
+                                                    </span> */}
+                                                    <AppleIdHelp className="left-0 sm:left-1"></AppleIdHelp>
                                                 </span>
                                             </div>
                                             <input
+                                                onInvalid={handleInvalid}
                                                 type="email"
                                                 name="apple_id_email"
                                                 required
@@ -123,8 +202,9 @@ export default function App() {
 
                                         {/* Affiliation */}
                                         <label className="block">
-                                            <span className="text-start mb-1 block font-medium text-slate-800 whitespace-nowrap">Affiliation / Campus / Department or Venue</span>
+                                            <span className="text-start mb-1 block font-medium text-slate-800 whitespace-nowrap">Campus department or venue</span>
                                             <input
+                                                onInvalid={handleInvalid}
                                                 name="affiliation"
                                                 required
                                                 placeholder="Cal Poly — Theatre & Dance"
@@ -154,6 +234,7 @@ export default function App() {
                                     {/* Consent (compact + visible checkbox) */}
                                     <div className="flex items-start gap-2">
                                         <input
+                                            onInvalid={handleInvalid}
                                             id="consent"
                                             type="checkbox"
                                             name="consent"
@@ -185,11 +266,36 @@ export default function App() {
                                         We’ll only use your info for beta access and pilot coordination.
                                     </p>
                                 </form>
+                                <div
+                                    role="status"
+                                    aria-live="polite"
+                                    className={`${state === "success" ? "block" : "hidden"} basis-1/2 grow-0 shrink-0 flex flex-col mx-auto w-full max-w-[360px] sm:max-w-[640px] rounded-xl bg-emerald-50 p-4 text-slate-800 shadow-lg + ring-1 ring-[black]-200/60`}
+                                >
+                                    <h3 className="text-lg font-semibold">Thanks for signing up. You’re in!</h3>
+                                    <p className="mt-1 text-sm">
+                                        Keep an eye on your Apple ID inbox for a TestFlight invite.
+                                    </p>
+
+                                    <div className="mt-3 flex gap-3 justify-center">
+                                        <a
+                                            href="https://apps.apple.com/app/testflight/id899247664"
+                                            className="items-center rounded-lg bg-slate-900 px-3 py-2 text-white text-sm hover:bg-slate-800"
+                                        >
+                                            Get TestFlight
+                                        </a>
+                                    </div>
+
+                                    <p className="mt-3 text-xs text-slate-600">
+                                        We only use your info for beta access and pilot coordination.
+                                    </p>
+                                </div>
+                                <div className={`${state === "success" ? "flex-1 min-h-0 mx-auto w-full max-w-[360px] sm:max-w-[640px]" : "hidden"} `}></div>
+
                             </div>
                         </div>
 
                         {/* Right: phones */}
-                        <div className="order-2 relative flex items-center justify-center xl:justify-end min-w-0">
+                        <div className="relative flex items-center justify-center min-w-0">
                             <img
                                 src={phones}
                                 alt="SceneAssist mobile app mockups"
