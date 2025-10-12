@@ -2,6 +2,8 @@
 import { AiFillGithub, AiFillLinkedin } from "react-icons/ai";
 import logoPill from ".././assets/sceneassist-wordmark.png";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import heartUrl from ".././assets/beating-heart.lottie?url";
+
 
 export default function Footer() {
     return (
@@ -50,7 +52,7 @@ export default function Footer() {
                             Crafted with{' '}
                             <span className="relative inline-block mx-1 h-7 w-7 align-middle">
                                 <DotLottieReact
-                                    src="src/assets/Beating Heart.lottie"
+                                    src={heartUrl}
                                     loop
                                     autoplay
                                     aria-hidden="true"
