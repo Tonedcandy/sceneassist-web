@@ -44,9 +44,9 @@ const handleInvalid = (e: React.FormEvent<any>) => {
 };
 
 // Clear custom message as the user types/selects
-const clearInvalid = (e: React.FormEvent<any>) => {
-    (e.currentTarget as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).setCustomValidity("");
-};
+// const clearInvalid = (e: React.FormEvent<any>) => {
+//     (e.currentTarget as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).setCustomValidity("");
+// };
 
 
 export default function App() {
@@ -57,7 +57,6 @@ export default function App() {
     });
 
     const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
-    const [showAidHelp, setShowAidHelp] = useState(false);
 
     async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
