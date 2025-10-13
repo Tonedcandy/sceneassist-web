@@ -3,11 +3,6 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-
-    { "source": "/(robots\\.txt|sitemap\\.xml|manifest\\.webmanifest|favicon\\.ico)", "destination": "/$1" },
-    { "source": "/assets/(.*)", "destination": "/assets/$1" },
-
-    { "source": "/((?!api|assets|robots\\.txt|sitemap\\.xml|manifest\\.webmanifest|favicon\\.ico).*)",
-      "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
