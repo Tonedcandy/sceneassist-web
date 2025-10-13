@@ -13,6 +13,17 @@ const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession:
 // export const config = { regions: ['sfo1'] };
 
 export default async function handler(req: any, res: any) {
+    // Graceful for history/back/refresh
+    if (req.method === 'GET' || req.method === 'HEAD') {
+        res.statusCode = 303;
+        res.setHeader('Location', '/');
+        return res.end();
+    }
+    if (req.method === 'OPTIONS') {
+        res.statusCode = 204;
+        res.setHeader('Allow', 'POST, GET, HEAD, OPTIONS');
+        return res.end();
+    }
     if (req.method !== 'POST') {
         res.statusCode = 405;
         return res.end('Method Not Allowed');
