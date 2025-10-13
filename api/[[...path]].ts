@@ -17,5 +17,6 @@ export default function handler(req: any, res: any) {
         .status(404)
         .setHeader('content-type', 'text/html; charset=utf-8')
         .setHeader('cache-control', 'public, max-age=60')
+        .setHeader('x-sa-handler', 'api-catchall')
         .send(HTML_404);
 }
