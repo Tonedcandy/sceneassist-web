@@ -1,3 +1,4 @@
+//src/App.tsx
 import './App.css'
 import MainApp from './index'
 import SiteFooter from './components/SiteFooter.tsx'

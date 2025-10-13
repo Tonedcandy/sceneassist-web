@@ -1,4 +1,4 @@
-// src/App.tsx
+// src/index.tsx
 import logoPill from "./assets/sceneassist-lockup-stacked.svg";
 import phones from "./assets/image-3.png";
 import React, { useState } from 'react';
