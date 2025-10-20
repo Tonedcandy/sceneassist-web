@@ -3,11 +3,16 @@ import logoPill from "./assets/sceneassist-lockup-stacked.svg";
 import phones from "./assets/image-3.png";
 import React, { useState } from 'react';
 import AppleIdHelp from "./components/AppleIDHelp";
+import { useRef } from "react";
 
 // import playBadge from "./assets/image-2.png";
 // import appStoreBadge from "./assets/group.png";
 
 import useHeadroom from "./components/hooks/useHeadroom";
+import TurnstileWidget, { type TurnstileRef } from '../src/components/TurnstileWidget';
+const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string;
+
+
 
 // Custom messages per field + constraint type
 const ERR: Record<string, Partial<Record<"valueMissing" | "typeMismatch" | "patternMismatch", string>>> = {
@@ -50,6 +55,49 @@ const handleInvalid = (e: React.FormEvent<any>) => {
 
 
 export default function App() {
+
+    const ref = useRef<TurnstileRef>(null);
+    const formRef = useRef<HTMLFormElement | null>(null);
+    const pendingBodyRef = useRef<URLSearchParams | null>(null);
+
+    const [status, setStatus] = useState<'idle' | 'verifying' | 'ok' | 'err'>('idle');
+
+    // async function onSubmit(e: React.FormEvent) {
+    //     e.preventDefault();
+    //     // Ask the widget to execute; Turnstile will call our onVerify
+    //     ref.current?.execute();
+    // }
+
+    async function handleVerify(token: string) {
+        // If Turnstile fired before the user submitted, ignore.
+        if (!pendingBodyRef.current) {
+            console.warn("[Turnstile] onVerify fired before submit; ignoring");
+            setState("idle");
+            return;
+        }
+        try {
+            const body = pendingBodyRef.current ?? new URLSearchParams();
+            body.append("cf_turnstile_token", token); // name it whatever your API expects
+
+            const res = await fetch("/api/testflight-signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                    "Accept": "application/json",
+                },
+                body: body.toString(),
+            });
+            console.log('[turnstile] token:', token?.slice(0, 12), 'len=', token?.length);
+            setState(res.ok ? "success" : "error");
+        } catch {
+            setState("error");
+        } finally {
+            pendingBodyRef.current = null;
+            // optionally: ref.current?.reset();
+        }
+    }
+
+
     const { pinned } = useHeadroom({
         pinStart: 24,
         downTolerance: 10,
@@ -62,25 +110,15 @@ export default function App() {
         e.preventDefault();
         setState("loading");
 
-        const fd = new FormData(e.currentTarget);
-
-        // send exactly what a normal form would send
+        const form = e.currentTarget;
+        const fd = new FormData(form);
         const body = new URLSearchParams();
         fd.forEach((v, k) => body.append(k, String(v)));
 
-        try {
-            const res = await fetch("/api/testflight-signup", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-                    "Accept": "application/json", // so the API can return 200 JSON (no redirect)
-                },
-                body: body.toString(),
-            });
-            setState(res.ok ? "success" : "error");
-        } catch {
-            setState("error");
-        }
+        pendingBodyRef.current = body;
+
+        // Trigger invisible widget; it will call handleVerify(token)
+        ref.current?.execute();
     }
 
     return (
@@ -254,6 +292,19 @@ export default function App() {
                                     </div>
 
                                     {/* Submit */}
+                                    <TurnstileWidget
+                                        ref={ref}
+                                        siteKey={SITE_KEY}
+                                        onVerify={() => { ref.current?.reset() }
+                                        }
+                                        onError={() => {
+                                            setState("error");       // return UI to normal (ready state)
+                                            ref.current?.reset();   // clear Turnstile’s internal state so the next execute can work
+                                        }}
+                                        onExpire={() => setState("idle")}
+                                        options={{ size: "normal", appearance: "always", execution: 'render', retry: 'never', action: "testflight_signup" }}
+                                    // className="hidden"
+                                    />
                                     <button
                                         type="submit"
                                         className="mt-1 inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/50"
