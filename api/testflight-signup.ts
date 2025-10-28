@@ -131,7 +131,7 @@ export default async function handler(req: any, res: any) {
 
 // ---- helpers ----
 async function verifyTurnstile(token: string, ip: string | null) {
-    const secret = process.env.TURNSTILE_SECRET_KEY;
+    const secret = process.env.SCENEASSIST_WEB_TURNSTILE_SECRET_KEY;
     if (!secret) throw new Error('Turnstile secret key not configured');
 
     const params = new URLSearchParams();
