@@ -13,7 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             '';
 
         const params = new URLSearchParams({
-            secret: process.env.TURNSTILE_SECRET_KEY as string,
+            secret: process.env.SCENEASSIST_WEB_TURNSTILE_SECRET_KEY as string,
             response: token,
             remoteip: ip,
         });
