@@ -1,5 +1,5 @@
 // src/components/TurnstileWidget.tsx
-import React, {
+import {
     useEffect, useRef, useImperativeHandle, forwardRef,
 } from 'react';
 import { useTurnstile } from '../lib/useTurnstile';

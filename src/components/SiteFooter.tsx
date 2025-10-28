@@ -1,9 +1,8 @@
 // src/components/Footer.tsx
 import { AiFillGithub, AiFillLinkedin } from "react-icons/ai";
 import logoPill from ".././assets/sceneassist-wordmark.png";
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import heartUrl from ".././assets/beating-heart.lottie?url";
-
 
 export default function Footer() {
     return (
@@ -44,13 +43,13 @@ export default function Footer() {
                     <div className="place-self-center
                 flex max-[499px]:flex-wrap min-[500px]:flex-nowrap
                 justify-center min-w-0 items-center
-                gap-x-2 gap-y-1
+                gap-x-1 gap-y-1
                 text-xs text-gray-400 leading-none whitespace-normal text-center">
 
                         {/* prefix */}
-                        <span className="inline-flex items-center gap-1 leading-none">
+                        <span className="inline-flex items-center leading-none">
                             Crafted with{' '}
-                            <span className="relative inline-block mx-1 h-7 w-7 align-middle">
+                            <span className="relative inline-block h-7 w-7 align-middle">
                                 <DotLottieReact
                                     src={heartUrl}
                                     loop

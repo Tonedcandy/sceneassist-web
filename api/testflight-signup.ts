@@ -60,9 +60,10 @@ export default async function handler(req: any, res: any) {
     const affiliation = (fields.affiliation || '').trim();
     const role = (fields.role || '').trim();
     const consent = ['on', 'true', '1', 'yes'].includes((fields.consent || '').toLowerCase());
+    const cfTurnstileToken = (fields.cf_turnstile_token || '').trim();
 
     // Required fields check
-    if (!full_name || !apple_id_email || !affiliation || !role || !consent) {
+    if (!full_name || !apple_id_email || !affiliation || !role || !consent || !cfTurnstileToken) {
         res.statusCode = 400;
         res.setHeader('Content-Type', 'application/json');
         return res.end(JSON.stringify({ ok: false, error: 'Missing required fields' }));
@@ -72,6 +73,33 @@ export default async function handler(req: any, res: any) {
         // Metadata
         const ip = (req.headers?.['x-forwarded-for'] || '').toString().split(',')[0] || null;
         const ua = (req.headers?.['user-agent'] || '').toString() || null;
+
+        // Verify Turnstile token server-side before proceeding
+        let turnstileResult: Awaited<ReturnType<typeof verifyTurnstile>> | null = null;
+        try {
+            turnstileResult = await verifyTurnstile(cfTurnstileToken, ip);
+        } catch (verifyErr) {
+            console.error('[Turnstile verification error]', verifyErr);
+            res.statusCode = 502;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(
+                JSON.stringify({
+                    ok: false,
+                    error: 'Turnstile verification error',
+                })
+            );
+        }
+        if (!turnstileResult?.success) {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(
+                JSON.stringify({
+                    ok: false,
+                    error: 'Turnstile verification failed',
+                    codes: turnstileResult['error-codes'] ?? [],
+                })
+            );
+        }
 
         // Upsert by email (ensure you have a UNIQUE index on apple_id_email)
         const { error } = await supabase
@@ -102,6 +130,36 @@ export default async function handler(req: any, res: any) {
 }
 
 // ---- helpers ----
+async function verifyTurnstile(token: string, ip: string | null) {
+    const secret = process.env.TURNSTILE_SECRET_KEY;
+    if (!secret) throw new Error('Turnstile secret key not configured');
+
+    const params = new URLSearchParams();
+    params.set('secret', secret);
+    params.set('response', token);
+    if (ip) params.set('remoteip', ip);
+
+    const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+    });
+
+    if (!result.ok) {
+        throw new Error(`Turnstile verify upstream failure: ${result.status}`);
+    }
+
+    const payload = await result.json();
+    return payload as {
+        success: boolean;
+        challenge_ts?: string;
+        hostname?: string;
+        action?: string;
+        cdata?: string;
+        'error-codes'?: string[];
+    };
+}
+
 async function readBody(
     req: any,
     opts: { length?: string | number; encoding?: string }
