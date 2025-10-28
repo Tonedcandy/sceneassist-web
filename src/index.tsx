@@ -295,6 +295,7 @@ export default function App() {
                                         <a
                                             href="https://apps.apple.com/app/testflight/id899247664"
                                             className="items-center rounded-lg bg-slate-900 px-3 py-2 text-white text-sm hover:bg-slate-800"
+                                            rel="noopener noreferrer"
                                         >
                                             Get TestFlight
                                         </a>
