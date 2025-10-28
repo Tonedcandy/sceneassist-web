@@ -3,13 +3,18 @@ import logoPill from "./assets/sceneassist-lockup-stacked.svg";
 import phones from "./assets/image-3.png";
 import React, { useState } from 'react';
 import AppleIdHelp from "./components/AppleIDHelp";
+import { useRef } from "react";
 
-// import playBadge from "./assets/image-2.png";
-// import appStoreBadge from "./assets/group.png";
+// Import playBadge from "./assets/image-2.png";
+// Import appStoreBadge from "./assets/group.png";
 
 import useHeadroom from "./components/hooks/useHeadroom";
+import TurnstileWidget, { type TurnstileRef } from '../src/components/TurnstileWidget';
+const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string;
 
-// Custom messages per field + constraint type
+
+
+// Custom error messages per field + constraint type
 const ERR: Record<string, Partial<Record<"valueMissing" | "typeMismatch" | "patternMismatch", string>>> = {
     full_name: {
         valueMissing: "Please enter your full name",
@@ -48,39 +53,64 @@ const handleInvalid = (e: React.FormEvent<any>) => {
 //     (e.currentTarget as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).setCustomValidity("");
 // };
 
-
 export default function App() {
+
+    const ref = useRef<TurnstileRef>(null);
+    const pendingBodyRef = useRef<URLSearchParams | null>(null);
     const { pinned } = useHeadroom({
         pinStart: 24,
         downTolerance: 10,
         upTolerance: 6,
     });
-
     const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+    async function handleVerify(token: string) {
+        // If Turnstile fired before the user submitted, ignore.
+        if (!pendingBodyRef.current) {
+            console.warn("[Turnstile] onVerify fired before submit; ignoring");
+            setState("idle");
+            return;
+        }
+        try {
+            const body = pendingBodyRef.current ?? new URLSearchParams();
+            body.append("cf_turnstile_token", token);
+
+            const res = await fetch("/api/testflight-signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                    "Accept": "application/json",
+                },
+                body: body.toString(),
+            });
+            console.log('[turnstile] token:', token?.slice(0, 12), 'len=', token?.length);
+            setState(res.ok ? "success" : "error");
+        } catch {
+            setState("error");
+        } finally {
+            pendingBodyRef.current = null;
+
+            // optional ref.current?.reset(); Turnstile is also being reset at the beginning of onSubmit
+            ref.current?.reset();
+        }
+    }
 
     async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setState("loading");
 
-        const fd = new FormData(e.currentTarget);
+        // Clear any prior error state so Turnstile shows a fresh challenge
+        ref.current?.reset();
 
-        // send exactly what a normal form would send
+        const form = e.currentTarget;
+        const fd = new FormData(form);
         const body = new URLSearchParams();
         fd.forEach((v, k) => body.append(k, String(v)));
 
-        try {
-            const res = await fetch("/api/testflight-signup", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-                    "Accept": "application/json", // so the API can return 200 JSON (no redirect)
-                },
-                body: body.toString(),
-            });
-            setState(res.ok ? "success" : "error");
-        } catch {
-            setState("error");
-        }
+        pendingBodyRef.current = body;
+
+        //Execute Cloudflare Turnstile
+        ref.current?.execute();
     }
 
     return (
@@ -100,13 +130,6 @@ export default function App() {
                             className="h-9 w-auto"
                         />
                     </a>
-                    {/* <a
-                        href="#get"
-                        className="rounded-xl px-3.5 py-2 text-sm font-semibold text-white"
-                        style={{ background: brand.primary }}
-                    >
-                        Get the app
-                    </a> */}
                 </div>
             </header>
             <section
@@ -138,6 +161,8 @@ export default function App() {
                             </p>
 
                             <div className="mt-4 flex flex-col w-full flex-wrap items-center justify-center gap-4 min-h-[340px] sm:min-h-[380px]">
+
+                                {/*/Code below to display Android Play Store and Apple App Store badges */}
                                 {/* <img src={appStoreBadge} alt="Pre-order on the App Store" className="h-14 w-auto" loading="lazy" />
                                 <img src={playBadge} alt="Pre-register on Google Play" className="h-14 w-auto" loading="lazy" /> */}
 
@@ -166,25 +191,6 @@ export default function App() {
                                             <div className="mb-1 flex items-center gap-1">
                                                 <span className="font-medium text-slate-800">Apple ID email</span>
                                                 <span className="relative group inline-flex">
-                                                    {/* <button
-                                                        type="button"
-                                                        aria-describedby="apple-id-help"
-                                                        aria-expanded={showAidHelp}
-                                                        aria-controls="apple-id-help"
-                                                        onClick={() => setShowAidHelp((v) => !v)}
-                                                        onBlur={() => setShowAidHelp(false)}        // closes when focus leaves
-                                                        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-400 bg-white text-[10px] leading-none text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
-                                                        aria-label="What is an Apple ID email?"
-                                                    >
-                                                        i
-                                                    </button>
-                                                    <span
-                                                        id="apple-id-help"
-                                                        role="tooltip"
-                                                        className={`absolute left-1/2 z-30 mt-2 w-60 -translate-x-1/2 rounded-md bg-slate-900 px-2.5 py-2 text-xs text-white shadow-lg ${showAidHelp ? "block" : "hidden"
-                                                            }`}                                                    >
-                                                        The email you use with the App Store on your device. We’ll send your TestFlight invite here.
-                                                    </span> */}
                                                     <AppleIdHelp className="left-0 sm:left-1"></AppleIdHelp>
                                                 </span>
                                             </div>
@@ -254,6 +260,16 @@ export default function App() {
                                     </div>
 
                                     {/* Submit */}
+                                    <TurnstileWidget
+                                        ref={ref}
+                                        siteKey={SITE_KEY}
+                                        onVerify={handleVerify}
+                                        onError={() => {
+                                            setState("error");
+                                        }}
+                                        onExpire={() => setState("idle")}
+                                        options={{ size: "normal", appearance: "execute", execution: 'execute', retry: 'never', action: "testflight_signup" }}
+                                    />
                                     <button
                                         type="submit"
                                         className="mt-1 inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/50"

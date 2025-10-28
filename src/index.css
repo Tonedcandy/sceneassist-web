@@ -82,6 +82,7 @@ html {
   .all-\[unset\] {
     all: unset;
   }
+
 }
 
 /* Utilities */
@@ -117,6 +118,7 @@ html {
     transform: rotate(1turn);
   }
 }
+
 
 @keyframes image-glow {
   0% {
